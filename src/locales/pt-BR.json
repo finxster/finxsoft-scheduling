@@ -28,7 +28,9 @@
     "email": "E-mail",
     "password": "Senha",
     "welcome": "Bem-vindo",
-    "loginError": "Erro ao fazer login"
+    "loginError": "Erro ao fazer login",
+    "demoMode": "Modo Demonstração",
+    "demoModeDescription": "Você está em modo de demonstração com dados fictícios. Use e-mail: professional@example.com e senha: password"
   },
   "dashboard": {
     "title": "Painel",

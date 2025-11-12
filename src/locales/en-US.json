@@ -28,7 +28,9 @@
     "email": "Email",
     "password": "Password",
     "welcome": "Welcome",
-    "loginError": "Login error"
+    "loginError": "Login error",
+    "demoMode": "Demo Mode",
+    "demoModeDescription": "You are in demo mode with mock data. Use email: professional@example.com and password: password"
   },
   "dashboard": {
     "title": "Dashboard",
