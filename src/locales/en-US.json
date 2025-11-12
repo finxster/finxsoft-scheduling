@@ -30,7 +30,7 @@
     "welcome": "Welcome",
     "loginError": "Login error",
     "demoMode": "Demo Mode",
-    "demoModeDescription": "You are in demo mode with mock data. Use email: professional@example.com and password: password"
+    "demoModeDescription": "You are in demo mode with mock data"
   },
   "dashboard": {
     "title": "Dashboard",
