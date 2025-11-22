@@ -14,12 +14,17 @@
         <AppointmentsListSkeleton :itemCount="5" />
       </div>
       
-      <div v-else-if="appointments.length === 0" class="text-center py-12">
-        <EmptyState
-          :message="t('appointments.noResults')"
-          :description="t('appointments.tryDifferentFilters')"
-        />
-      </div>
+      <ErrorState 
+        v-else-if="error"
+        :message="error"
+        @retry="loadAppointments"
+      />
+      
+      <EmptyState
+        v-else-if="appointments.length === 0"
+        :message="t('appointments.noResults')"
+        :description="t('appointments.tryDifferentFilters')"
+      />
       
       <div v-else>
         <AppointmentList
@@ -31,8 +36,8 @@
         <div class="mt-6 flex items-center justify-between">
           <p class="text-sm text-gray-600">
             {{ t('appointments.pagination', { 
-              from: (currentPage - 1) * pageSize + 1,
-              to: Math.min(currentPage * pageSize, totalItems),
+              from: currentPage * pageSize + 1,
+              to: Math.min((currentPage + 1) * pageSize, totalItems),
               total: totalItems
             }) }}
           </p>
@@ -40,14 +45,14 @@
           <div class="flex gap-2">
             <button
               @click="prevPage"
-              :disabled="currentPage === 1"
+              :disabled="currentPage === 0"
               class="btn-secondary disabled:opacity-50"
             >
               {{ t('common.previous') }}
             </button>
             <button
               @click="nextPage"
-              :disabled="currentPage >= totalPages"
+              :disabled="currentPage >= totalPages - 1"
               class="btn-secondary disabled:opacity-50"
             >
               {{ t('common.next') }}
@@ -90,13 +95,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppointmentsStore } from '@/stores/appointments'
+import { useToast } from '@/composables/useToast'
 import AppointmentFilters from '@/components/appointments/AppointmentFilters.vue'
 import AppointmentList from '@/components/appointments/AppointmentList.vue'
 import AppointmentsListSkeleton from '@/components/common/AppointmentsListSkeleton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import ErrorState from '@/components/common/ErrorState.vue'
 import AppModal from '@/components/common/AppModal.vue'
 
 const { t } = useI18n()
+const toast = useToast()
 const appointmentsStore = useAppointmentsStore()
 
 const filters = ref({
@@ -108,6 +116,7 @@ const filters = ref({
 const cancelModalOpen = ref(false)
 const cancelReason = ref('')
 const appointmentToCancel = ref(null)
+const error = ref('')
 
 const appointments = computed(() => appointmentsStore.appointments)
 const loading = computed(() => appointmentsStore.loading)
@@ -121,11 +130,16 @@ onMounted(() => {
 })
 
 async function loadAppointments() {
-  await appointmentsStore.fetchAppointments({
-    ...filters.value,
-    page: currentPage.value,
-    size: pageSize
-  })
+  error.value = ''
+  try {
+    await appointmentsStore.fetchAppointments({
+      ...filters.value,
+      page: currentPage.value,
+      size: pageSize
+    })
+  } catch (err) {
+    error.value = err.response?.data?.message || t('common.errorMessage')
+  }
 }
 
 function handleFilterChange(newFilters) {
@@ -134,8 +148,13 @@ function handleFilterChange(newFilters) {
 }
 
 async function handleConfirm(appointmentId) {
-  await appointmentsStore.confirmAppointment(appointmentId)
-  loadAppointments()
+  try {
+    await appointmentsStore.confirmAppointment(appointmentId)
+    toast.success(t('appointments.confirmed'))
+    loadAppointments()
+  } catch (err) {
+    toast.error(err.response?.data?.message || t('appointments.confirmError'))
+  }
 }
 
 function showCancelModal(appointmentId) {
@@ -145,23 +164,28 @@ function showCancelModal(appointmentId) {
 
 async function handleCancelConfirm() {
   if (appointmentToCancel.value) {
-    await appointmentsStore.cancelAppointment(appointmentToCancel.value, cancelReason.value)
-    cancelModalOpen.value = false
-    cancelReason.value = ''
-    appointmentToCancel.value = null
-    loadAppointments()
+    try {
+      await appointmentsStore.cancelAppointment(appointmentToCancel.value, cancelReason.value)
+      toast.success(t('appointments.cancelled'))
+      cancelModalOpen.value = false
+      cancelReason.value = ''
+      appointmentToCancel.value = null
+      loadAppointments()
+    } catch (err) {
+      toast.error(err.response?.data?.message || t('appointments.cancelError'))
+    }
   }
 }
 
 function prevPage() {
-  if (currentPage.value > 1) {
+  if (currentPage.value > 0) {
     appointmentsStore.currentPage--
     loadAppointments()
   }
 }
 
 function nextPage() {
-  if (currentPage.value < totalPages.value) {
+  if (currentPage.value < totalPages.value - 1) {
     appointmentsStore.currentPage++
     loadAppointments()
   }

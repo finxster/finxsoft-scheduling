@@ -20,7 +20,12 @@
     "view": "Visualizar",
     "all": "Todos",
     "clear": "Limpar",
-    "step": "Etapa"
+    "step": "Etapa",
+    "retry": "Tentar Novamente",
+    "errorTitle": "Algo deu errado",
+    "errorMessage": "Não foi possível carregar os dados. Por favor, tente novamente.",
+    "networkError": "Erro de conexão. Verifique sua internet.",
+    "serverError": "Erro no servidor. Tente novamente mais tarde."
   },
   "auth": {
     "login": "Entrar",
@@ -37,6 +42,8 @@
     "greeting": "Olá",
     "todayAppointments": "Consultas Hoje",
     "pendingConfirmation": "Pendentes",
+    "confirmedAppointments": "Confirmadas",
+    "totalAppointments": "Total de Consultas",
     "weekTotal": "Total da Semana",
     "attendanceRate": "Taxa de Comparecimento",
     "upcomingAppointments": "Próximas Consultas",
@@ -64,6 +71,10 @@
     "cancelAppointment": "Cancelar Consulta",
     "cancelReason": "Motivo do cancelamento",
     "confirmCancel": "Tem certeza que deseja cancelar esta consulta?",
+    "confirmed": "Consulta confirmada com sucesso",
+    "cancelled": "Consulta cancelada com sucesso",
+    "confirmError": "Erro ao confirmar consulta",
+    "cancelError": "Erro ao cancelar consulta",
     "pagination": "Mostrando {from} a {to} de {total}",
     "noResults": "Nenhuma consulta encontrada",
     "tryDifferentFilters": "Tente ajustar os filtros"
@@ -79,7 +90,13 @@
     "recurring": "Recorrente",
     "months": ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
     "days": ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
-    "noAppointmentsForDay": "Nenhuma consulta neste dia"
+    "noAppointmentsForDay": "Nenhuma consulta neste dia",
+    "timeBlocked": "Horário bloqueado com sucesso",
+    "blockError": "Erro ao bloquear horário",
+    "blocked": "Bloqueado",
+    "blockedPeriods": "Períodos Bloqueados",
+    "timeUnblocked": "Bloqueio removido com sucesso",
+    "deleteError": "Erro ao remover bloqueio"
   },
   "settings": {
     "title": "Configurações",
@@ -96,7 +113,8 @@
     "cancellationNotif": "Cancelamento de consulta",
     "dailySummary": "Resumo diário",
     "displayName": "Nome de Exibição",
-    "changesSaved": "Alterações salvas com sucesso"
+    "changesSaved": "Alterações salvas com sucesso",
+    "saveError": "Erro ao salvar configurações"
   },
   "onboarding": {
     "welcome": "Bem-vindo ao",

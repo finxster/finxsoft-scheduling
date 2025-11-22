@@ -19,7 +19,7 @@
               <Clock class="w-4 h-4" />
               {{ formattedTime }}
             </span>
-            <span>{{ appointment.duration }}min</span>
+            <span>{{ appointment.durationMinutes }}min</span>
           </div>
         </div>
       </div>
@@ -77,6 +77,6 @@ defineEmits(['confirm', 'cancel'])
 
 const { t, locale } = useI18n()
 
-const formattedDate = computed(() => formatDate(props.appointment.dateTime, 'PP', locale.value))
-const formattedTime = computed(() => formatTime(props.appointment.dateTime, locale.value))
+const formattedDate = computed(() => formatDate(props.appointment.scheduledAt, 'PP', locale.value))
+const formattedTime = computed(() => formatTime(props.appointment.scheduledAt, locale.value))
 </script>

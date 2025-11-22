@@ -2,7 +2,20 @@
   <div class="space-y-6">
     <h2 class="text-2xl font-bold text-gray-900">{{ t('settings.title') }}</h2>
     
-    <div class="bg-white rounded-card shadow-card">
+    <div v-if="loading" class="bg-white rounded-card shadow-card p-6">
+      <div class="animate-pulse space-y-4">
+        <div class="h-10 bg-gray-200 rounded w-1/3"></div>
+        <div class="h-32 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+    
+    <ErrorState 
+      v-else-if="error"
+      :message="error"
+      @retry="loadProfile"
+    />
+    
+    <div v-else class="bg-white rounded-card shadow-card">
       <div class="border-b border-gray-200">
         <nav class="flex -mb-px">
           <button
@@ -44,12 +57,12 @@
           
           <div class="grid md:grid-cols-2 gap-4">
             <AppInput
-              v-model="settingsForm.startTime"
+              v-model="settingsForm.workStart"
               type="time"
               :label="t('settings.startTime')"
             />
             <AppInput
-              v-model="settingsForm.endTime"
+              v-model="settingsForm.workEnd"
               type="time"
               :label="t('settings.endTime')"
             />
@@ -68,13 +81,13 @@
               :key="duration.value"
               class="flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-all"
               :class="[
-                settingsForm.slotDuration === duration.value
+                settingsForm.slotDurationMinutes === duration.value
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 hover:border-blue-300'
               ]"
             >
               <input
-                v-model="settingsForm.slotDuration"
+                v-model="settingsForm.slotDurationMinutes"
                 type="radio"
                 :value="duration.value"
                 class="sr-only"
@@ -114,13 +127,18 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useProfessionalStore } from '@/stores/professional'
+import { useToast } from '@/composables/useToast'
 import { WEEK_DAYS, SLOT_DURATIONS } from '@/utils/constants'
 import AppInput from '@/components/common/AppInput.vue'
+import ErrorState from '@/components/common/ErrorState.vue'
 
 const { t } = useI18n()
+const toast = useToast()
 const professionalStore = useProfessionalStore()
 
 const activeTab = ref('workHours')
+const error = ref('')
+const loading = computed(() => professionalStore.loading)
 
 const tabs = [
   { id: 'workHours', label: 'settings.workHours' },
@@ -130,27 +148,60 @@ const tabs = [
 
 const settingsForm = ref({
   workDays: [],
-  startTime: '09:00',
-  endTime: '18:00',
-  slotDuration: 60,
+  workStart: '09:00:00',
+  workEnd: '18:00:00',
+  slotDurationMinutes: 60,
   displayName: '',
-  email: ''
+  email: '',
+  specialty: '',
+  bio: '',
+  brandName: '',
+  logoUrl: '',
+  primaryColor: '',
+  accentColor: '',
+  publicBookingEnabled: true
 })
 
 const weekDays = WEEK_DAYS
 const slotDurations = SLOT_DURATIONS
 
-onMounted(async () => {
-  await professionalStore.fetchProfile()
-  settingsForm.value = {
-    ...professionalStore.settings,
-    displayName: professionalStore.profile?.displayName || '',
-    email: professionalStore.profile?.email || ''
-  }
+onMounted(() => {
+  loadProfile()
 })
 
+async function loadProfile() {
+  error.value = ''
+  try {
+    await professionalStore.fetchProfile()
+    const profile = professionalStore.profile
+    if (profile) {
+      settingsForm.value = {
+        workDays: profile.workDays || [],
+        workStart: profile.workStart || '09:00:00',
+        workEnd: profile.workEnd || '18:00:00',
+        slotDurationMinutes: profile.slotDurationMinutes || 60,
+        displayName: profile.displayName || '',
+        email: profile.email || '',
+        specialty: profile.specialty || '',
+        bio: profile.bio || '',
+        brandName: profile.brandName || '',
+        logoUrl: profile.logoUrl || '',
+        primaryColor: profile.primaryColor || '',
+        accentColor: profile.accentColor || '',
+        publicBookingEnabled: profile.publicBookingEnabled !== false
+      }
+    }
+  } catch (err) {
+    error.value = err.response?.data?.message || t('common.errorMessage')
+  }
+}
+
 async function saveSettings() {
-  await professionalStore.updateSettings(settingsForm.value)
-  alert(t('settings.changesSaved'))
+  try {
+    await professionalStore.updateSettings(settingsForm.value)
+    toast.success(t('settings.changesSaved'))
+  } catch (err) {
+    toast.error(err.response?.data?.message || t('settings.saveError'))
+  }
 }
 </script>

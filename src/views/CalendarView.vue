@@ -42,7 +42,41 @@
           :class="getDayClasses(day)"
           @click="selectDay(day)"
         >
-          <span class="text-sm">{{ day ? format(day, 'd') : '' }}</span>
+          <div class="flex flex-col h-full">
+            <span class="text-sm font-medium">{{ day ? format(day, 'd') : '' }}</span>
+            <div v-if="day && isBlockedDay(day)" class="mt-1 text-xs bg-red-100 text-red-700 px-1 py-0.5 rounded">
+              {{ t('calendar.blocked') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Time Blocks List -->
+    <div v-if="calendarStore.timeBlocks.length > 0" class="bg-white rounded-card shadow-card p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('calendar.blockedPeriods') }}</h3>
+      <div class="space-y-3">
+        <div
+          v-for="block in calendarStore.timeBlocks"
+          :key="block.id"
+          class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+        >
+          <div class="flex-1">
+            <p class="font-medium text-gray-900">{{ block.reason }}</p>
+            <p class="text-sm text-gray-600">
+              {{ formatDate(new Date(block.startTime), 'PP', locale) }} - 
+              {{ formatDate(new Date(block.endTime), 'PP', locale) }}
+            </p>
+          </div>
+          <button
+            @click="deleteBlock(block.id)"
+            class="text-red-600 hover:text-red-700 p-2"
+            :title="t('common.delete')"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -97,14 +131,17 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth } from 'date-fns'
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isWithinInterval, parseISO } from 'date-fns'
 import { ptBR, enUS } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useCalendarStore } from '@/stores/calendar'
+import { useToast } from '@/composables/useToast'
+import { formatDate } from '@/utils/dateHelpers'
 import AppModal from '@/components/common/AppModal.vue'
 import AppInput from '@/components/common/AppInput.vue'
 
 const { t, locale } = useI18n()
+const toast = useToast()
 const calendarStore = useCalendarStore()
 
 const selectedDay = ref(null)
@@ -133,14 +170,31 @@ const calendarDays = computed(() => {
 })
 
 onMounted(async () => {
-  await calendarStore.fetchTimeBlocks()
+  try {
+    await calendarStore.fetchTimeBlocks()
+  } catch (error) {
+    toast.error(error.response?.data?.message || t('common.errorMessage'))
+  }
 })
+
+function isBlockedDay(day) {
+  return calendarStore.timeBlocks.some(block => {
+    const start = parseISO(block.startTime)
+    const end = parseISO(block.endTime)
+    return isWithinInterval(day, { start, end })
+  })
+}
 
 function getDayClasses(day) {
   if (!day) return 'p-2 min-h-[80px]'
   
+  const isBlocked = isBlockedDay(day)
+  
   return [
-    'p-2 min-h-[80px] border border-gray-200 rounded-lg cursor-pointer transition-colors hover:bg-blue-50'
+    'p-2 min-h-[80px] border rounded-lg cursor-pointer transition-colors',
+    isBlocked 
+      ? 'border-red-300 bg-red-50 hover:bg-red-100' 
+      : 'border-gray-200 hover:bg-blue-50'
   ]
 }
 
@@ -151,19 +205,33 @@ function selectDay(day) {
 }
 
 async function handleBlockTime() {
-  await calendarStore.createTimeBlock({
-    startDate: new Date(blockForm.value.startDate).toISOString(),
-    endDate: new Date(blockForm.value.endDate).toISOString(),
-    reason: blockForm.value.reason,
-    recurring: blockForm.value.recurring
-  })
-  
-  blockTimeModalOpen.value = false
-  blockForm.value = {
-    startDate: '',
-    endDate: '',
-    reason: '',
-    recurring: false
+  try {
+    await calendarStore.createTimeBlock({
+      startTime: new Date(blockForm.value.startDate).toISOString(),
+      endTime: new Date(blockForm.value.endDate).toISOString(),
+      reason: blockForm.value.reason,
+      recurring: blockForm.value.recurring
+    })
+    
+    toast.success(t('calendar.timeBlocked'))
+    blockTimeModalOpen.value = false
+    blockForm.value = {
+      startDate: '',
+      endDate: '',
+      reason: '',
+      recurring: false
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || t('calendar.blockError'))
+  }
+}
+
+async function deleteBlock(blockId) {
+  try {
+    await calendarStore.deleteTimeBlock(blockId)
+    toast.success(t('calendar.timeUnblocked'))
+  } catch (error) {
+    toast.error(error.response?.data?.message || t('calendar.deleteError'))
   }
 }
 </script>

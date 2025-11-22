@@ -62,13 +62,12 @@ Create `.env.development` and `.env.production` files:
 VITE_API_URL=http://localhost:8080/api/v1
 VITE_PARENT_URL=http://localhost:3000
 VITE_PARENT_API_URL=http://localhost:8080/atipicali-api
-VITE_USE_MOCK=true
 
 # .env.production
 VITE_API_URL=https://api.scheduling.atipicali.com/api/v1
 VITE_PARENT_URL=https://atipicali.com.br
 VITE_PARENT_API_URL=https://api.atipicali.com.br
-VITE_USE_MOCK=false
+
 ```
 
 ### Installation
@@ -123,10 +122,6 @@ The application uses JWT-based authentication with the following flow:
 3. Token is stored in Pinia store
 4. Token is automatically included in all API requests via Axios interceptor
 5. 401 responses trigger automatic logout and redirect to login
-
-### Mock Mode
-
-For development and demos, set `VITE_USE_MOCK=true` to use mock data instead of real API calls.
 
 ## 📊 Data Models
 

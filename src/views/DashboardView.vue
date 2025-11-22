@@ -1,6 +1,14 @@
 <template>
   <div class="space-y-6">
-    <div>
+    <!-- Error State for Profile Loading -->
+    <div v-if="profileError" class="bg-white rounded-card shadow-card p-6">
+      <ErrorState 
+        :message="profileError"
+        @retry="loadProfile"
+      />
+    </div>
+    
+    <div v-else>
       <h3 class="text-xl font-semibold text-gray-900">
         {{ t('dashboard.greeting') }}, {{ professional?.displayName || 'Professional' }}!
       </h3>
@@ -12,7 +20,7 @@
         <div class="flex items-center justify-between mb-2">
           <Calendar class="w-8 h-8 text-blue-500" />
         </div>
-        <h4 class="text-3xl font-bold text-gray-900">{{ stats.today }}</h4>
+        <h4 class="text-3xl font-bold text-gray-900">{{ stats.todayCount }}</h4>
         <p class="text-gray-600 text-sm">{{ t('dashboard.todayAppointments') }}</p>
       </div>
       
@@ -20,7 +28,7 @@
         <div class="flex items-center justify-between mb-2">
           <Clock class="w-8 h-8 text-yellow-500" />
         </div>
-        <h4 class="text-3xl font-bold text-gray-900">{{ stats.pending }}</h4>
+        <h4 class="text-3xl font-bold text-gray-900">{{ stats.pendingCount }}</h4>
         <p class="text-gray-600 text-sm">{{ t('dashboard.pendingConfirmation') }}</p>
       </div>
       
@@ -28,16 +36,16 @@
         <div class="flex items-center justify-between mb-2">
           <TrendingUp class="w-8 h-8 text-green-500" />
         </div>
-        <h4 class="text-3xl font-bold text-gray-900">{{ stats.weekTotal }}</h4>
-        <p class="text-gray-600 text-sm">{{ t('dashboard.weekTotal') }}</p>
+        <h4 class="text-3xl font-bold text-gray-900">{{ stats.confirmedCount }}</h4>
+        <p class="text-gray-600 text-sm">{{ t('dashboard.confirmedAppointments') }}</p>
       </div>
       
-      <div class="bg-white rounded-card shadow-card p-6 border-l-4 border-red-500">
+      <div class="bg-white rounded-card shadow-card p-6 border-l-4 border-purple-500">
         <div class="flex items-center justify-between mb-2">
-          <Users class="w-8 h-8 text-red-500" />
+          <Users class="w-8 h-8 text-purple-500" />
         </div>
-        <h4 class="text-3xl font-bold text-gray-900">{{ stats.attendanceRate }}%</h4>
-        <p class="text-gray-600 text-sm">{{ t('dashboard.attendanceRate') }}</p>
+        <h4 class="text-3xl font-bold text-gray-900">{{ stats.totalCount }}</h4>
+        <p class="text-gray-600 text-sm">{{ t('dashboard.totalAppointments') }}</p>
       </div>
     </div>
     
@@ -46,17 +54,20 @@
       
       <DashboardSkeleton v-if="loading" />
       
-      <div v-else-if="upcomingAppointments.length === 0" class="text-center py-8">
-        <EmptyState :message="t('dashboard.noAppointments')" />
-      </div>
+      <ErrorState 
+        v-else-if="appointmentsError"
+        :message="appointmentsError"
+        @retry="loadAppointments"
+      />
       
-      <div v-else>
-        <AppointmentList
-          :appointments="upcomingAppointments"
-          @confirm="confirmAppointment"
-          @cancel="cancelAppointment"
-        />
-      </div>
+      <EmptyState v-else-if="upcomingAppointments.length === 0" :message="t('dashboard.noAppointments')" />
+      
+      <AppointmentList
+        v-else
+        :appointments="upcomingAppointments"
+        @confirm="confirmAppointment"
+        @cancel="cancelAppointment"
+      />
     </div>
   </div>
 </template>
@@ -66,15 +77,21 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppointmentsStore } from '@/stores/appointments'
 import { useProfessionalStore } from '@/stores/professional'
+import { useToast } from '@/composables/useToast'
 import { formatDate } from '@/utils/dateHelpers'
 import { Calendar, Clock, TrendingUp, Users } from 'lucide-vue-next'
 import DashboardSkeleton from '@/components/common/DashboardSkeleton.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import ErrorState from '@/components/common/ErrorState.vue'
 import AppointmentList from '@/components/appointments/AppointmentList.vue'
 
 const { t, locale } = useI18n()
+const toast = useToast()
 const appointmentsStore = useAppointmentsStore()
 const professionalStore = useProfessionalStore()
+
+const profileError = ref('')
+const appointmentsError = ref('')
 
 const stats = computed(() => appointmentsStore.stats)
 const upcomingAppointments = computed(() => appointmentsStore.upcomingAppointments)
@@ -82,20 +99,48 @@ const loading = computed(() => appointmentsStore.loading)
 const professional = computed(() => professionalStore.profile)
 
 onMounted(async () => {
-  await Promise.all([
-    appointmentsStore.fetchDashboardStats(),
-    appointmentsStore.fetchAppointments(),
-    professionalStore.fetchProfile()
-  ])
+  await loadProfile()
+  await loadAppointments()
 })
 
+async function loadProfile() {
+  profileError.value = ''
+  try {
+    await professionalStore.fetchProfile()
+  } catch (error) {
+    profileError.value = error.response?.data?.message || t('common.errorMessage')
+  }
+}
+
+async function loadAppointments() {
+  appointmentsError.value = ''
+  try {
+    await Promise.all([
+      appointmentsStore.fetchDashboardStats(),
+      appointmentsStore.fetchAppointments()
+    ])
+  } catch (error) {
+    appointmentsError.value = error.response?.data?.message || t('common.errorMessage')
+  }
+}
+
 async function confirmAppointment(id) {
-  await appointmentsStore.confirmAppointment(id)
-  await appointmentsStore.fetchAppointments()
+  try {
+    await appointmentsStore.confirmAppointment(id)
+    toast.success(t('appointments.confirmed'))
+    await loadAppointments()
+  } catch (error) {
+    toast.error(error.response?.data?.message || t('appointments.confirmError'))
+  }
 }
 
 async function cancelAppointment(id) {
-  await appointmentsStore.cancelAppointment(id, 'Cancelled from dashboard')
-  await appointmentsStore.fetchAppointments()
+  try {
+    await appointmentsStore.cancelAppointment(id, 'Cancelled from dashboard')
+    toast.success(t('appointments.cancelled'))
+    await loadAppointments()
+  } catch (error) {
+    toast.error(error.response?.data?.message || t('appointments.cancelError'))
+  }
 }
 </script>

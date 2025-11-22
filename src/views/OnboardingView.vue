@@ -45,11 +45,11 @@
           <div class="grid md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-2">{{ t('settings.startTime') }}</label>
-              <input v-model="onboardingData.startTime" type="time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg" />
+              <input v-model="onboardingData.workStart" type="time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg" />
             </div>
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-2">{{ t('settings.endTime') }}</label>
-              <input v-model="onboardingData.endTime" type="time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg" />
+              <input v-model="onboardingData.workEnd" type="time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-lg" />
             </div>
           </div>
         </div>
@@ -65,9 +65,9 @@
               v-for="duration in slotDurations"
               :key="duration.value"
               class="flex flex-col items-center justify-center p-6 border-2 rounded-lg cursor-pointer transition-all"
-              :class="[onboardingData.slotDuration === duration.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300']"
+              :class="[onboardingData.slotDurationMinutes === duration.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300']"
             >
-              <input v-model="onboardingData.slotDuration" type="radio" :value="duration.value" class="sr-only" />
+              <input v-model="onboardingData.slotDurationMinutes" type="radio" :value="duration.value" class="sr-only" />
               <span class="text-2xl font-bold">{{ duration.value }}</span>
               <span class="text-sm text-gray-600">{{ t('settings.minutes') }}</span>
             </label>
@@ -91,14 +91,14 @@
                 <Clock class="w-6 h-6 text-blue-500" />
                 <div>
                   <p class="font-semibold text-gray-900">{{ t('settings.workHours') }}</p>
-                  <p class="text-sm text-gray-600">{{ onboardingData.startTime }} - {{ onboardingData.endTime }}</p>
+                  <p class="text-sm text-gray-600">{{ onboardingData.workStart }} - {{ onboardingData.workEnd }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-3">
                 <Timer class="w-6 h-6 text-blue-500" />
                 <div>
                   <p class="font-semibold text-gray-900">{{ t('settings.slotDuration') }}</p>
-                  <p class="text-sm text-gray-600">{{ onboardingData.slotDuration }} {{ t('settings.minutes') }}</p>
+                  <p class="text-sm text-gray-600">{{ onboardingData.slotDurationMinutes }} {{ t('settings.minutes') }}</p>
                 </div>
               </div>
             </div>
@@ -137,10 +137,17 @@ const professionalStore = useProfessionalStore()
 
 const currentStep = ref(1)
 const onboardingData = ref({
-  workDays: [1, 2, 3, 4, 5],
-  startTime: '09:00',
-  endTime: '18:00',
-  slotDuration: 60
+  workDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
+  workStart: '09:00:00',
+  workEnd: '18:00:00',
+  slotDurationMinutes: 60,
+  slug: '',
+  displayName: '',
+  email: '',
+  specialty: '',
+  bio: '',
+  brandName: '',
+  publicBookingEnabled: true
 })
 
 const weekDays = WEEK_DAYS
@@ -149,8 +156,8 @@ const slotDurations = SLOT_DURATIONS
 const canProceed = computed(() => {
   switch (currentStep.value) {
     case 1: return onboardingData.value.workDays.length > 0
-    case 2: return onboardingData.value.startTime && onboardingData.value.endTime
-    case 3: return onboardingData.value.slotDuration > 0
+    case 2: return onboardingData.value.workStart && onboardingData.value.workEnd
+    case 3: return onboardingData.value.slotDurationMinutes > 0
     default: return true
   }
 })
@@ -168,8 +175,25 @@ function prevStep() {
 }
 
 async function completeOnboarding() {
-  await professionalStore.onboardProfessional(onboardingData.value)
-  authStore.completeOnboarding()
-  router.push('/dashboard')
+  try {
+    // Get user info from auth store
+    const user = authStore.user
+    
+    // Prepare onboarding data with all required fields
+    const data = {
+      ...onboardingData.value,
+      slug: user.externalId || user.userId, // Use externalId or userId as slug
+      email: user.email,
+      displayName: onboardingData.value.displayName || user.email.split('@')[0],
+      tenantId: 'atipicali' // Default tenant
+    }
+    
+    await professionalStore.onboardProfessional(data)
+    authStore.completeOnboarding()
+    router.push('/dashboard')
+  } catch (error) {
+    console.error('Onboarding error:', error)
+    alert(t('onboarding.error'))
+  }
 }
 </script>

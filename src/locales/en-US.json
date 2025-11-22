@@ -20,7 +20,12 @@
     "view": "View",
     "all": "All",
     "clear": "Clear",
-    "step": "Step"
+    "step": "Step",
+    "retry": "Try Again",
+    "errorTitle": "Something went wrong",
+    "errorMessage": "Unable to load data. Please try again.",
+    "networkError": "Connection error. Check your internet.",
+    "serverError": "Server error. Please try again later."
   },
   "auth": {
     "login": "Login",
@@ -37,6 +42,8 @@
     "greeting": "Hello",
     "todayAppointments": "Today's Appointments",
     "pendingConfirmation": "Pending",
+    "confirmedAppointments": "Confirmed",
+    "totalAppointments": "Total Appointments",
     "weekTotal": "Week Total",
     "attendanceRate": "Attendance Rate",
     "upcomingAppointments": "Upcoming Appointments",
@@ -64,9 +71,13 @@
     "cancelAppointment": "Cancel Appointment",
     "cancelReason": "Cancellation reason",
     "confirmCancel": "Are you sure you want to cancel this appointment?",
+    "confirmed": "Appointment confirmed successfully",
+    "cancelled": "Appointment cancelled successfully",
+    "confirmError": "Error confirming appointment",
+    "cancelError": "Error cancelling appointment",
     "pagination": "Showing {from} to {to} of {total}",
     "noResults": "No appointments found",
-    "tryDifferentFilters": "Try different filters"
+    "tryDifferentFilters": "Try adjusting the filters"
   },
   "calendar": {
     "title": "Calendar",
@@ -79,7 +90,13 @@
     "recurring": "Recurring",
     "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    "noAppointmentsForDay": "No appointments for this day"
+    "noAppointmentsForDay": "No appointments for this day",
+    "timeBlocked": "Time blocked successfully",
+    "blockError": "Error blocking time",
+    "blocked": "Blocked",
+    "blockedPeriods": "Blocked Periods",
+    "timeUnblocked": "Block removed successfully",
+    "deleteError": "Error removing block"
   },
   "settings": {
     "title": "Settings",
@@ -96,7 +113,8 @@
     "cancellationNotif": "Appointment cancellation",
     "dailySummary": "Daily summary",
     "displayName": "Display Name",
-    "changesSaved": "Changes saved successfully"
+    "changesSaved": "Changes saved successfully",
+    "saveError": "Error saving settings"
   },
   "onboarding": {
     "welcome": "Welcome to",

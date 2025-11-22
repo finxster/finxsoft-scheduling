@@ -13,13 +13,13 @@ export const SLOT_DURATIONS = [
 ]
 
 export const WEEK_DAYS = [
-  { value: 0, label: 'Sunday', labelPt: 'Domingo' },
-  { value: 1, label: 'Monday', labelPt: 'Segunda' },
-  { value: 2, label: 'Tuesday', labelPt: 'Terça' },
-  { value: 3, label: 'Wednesday', labelPt: 'Quarta' },
-  { value: 4, label: 'Thursday', labelPt: 'Quinta' },
-  { value: 5, label: 'Friday', labelPt: 'Sexta' },
-  { value: 6, label: 'Saturday', labelPt: 'Sábado' }
+  { value: 'SUNDAY', label: 'Sunday', labelPt: 'Domingo' },
+  { value: 'MONDAY', label: 'Monday', labelPt: 'Segunda' },
+  { value: 'TUESDAY', label: 'Tuesday', labelPt: 'Terça' },
+  { value: 'WEDNESDAY', label: 'Wednesday', labelPt: 'Quarta' },
+  { value: 'THURSDAY', label: 'Thursday', labelPt: 'Quinta' },
+  { value: 'FRIDAY', label: 'Friday', labelPt: 'Sexta' },
+  { value: 'SATURDAY', label: 'Saturday', labelPt: 'Sábado' }
 ]
 
 export const STATUS_COLORS = {

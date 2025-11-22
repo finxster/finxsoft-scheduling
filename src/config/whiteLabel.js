@@ -2,7 +2,7 @@ export default {
   brand: {
     name: 'AtipicALI Scheduling',
     shortName: 'Scheduling',
-    logo: '/logo.svg',
+    logo: '/scheduling-logo.png',
     primaryColor: '#3B82F6',
     secondaryColor: '#EF4444',
   },
@@ -14,7 +14,7 @@ export default {
   integration: {
     parentPlatformUrl: import.meta.env.VITE_PARENT_URL || 'http://localhost:3000',
     parentPlatformName: 'AtipicALI',
-    parentPlatformApiUrl: import.meta.env.VITE_PARENT_API_URL || 'http://localhost:8080/atipicali-api',
+    parentPlatformApiUrl: import.meta.env.VITE_PARENT_API_URL || 'http://localhost:8080/api',
   },
   i18n: {
     defaultLocale: 'pt-BR',

@@ -1,19 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-    <!-- Demo Mode Banner -->
-    <div v-if="isDemoMode" class="fixed top-0 left-0 right-0 bg-blue-50 border-b border-blue-200 p-4">
-      <div class="max-w-md mx-auto flex items-center gap-3">
-        <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div>
-          <h3 class="text-xs font-semibold text-blue-900">{{ t('auth.demoMode') }}</h3>
-          <p class="text-xs text-blue-700">{{ t('auth.demoModeDescription') }}</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="w-full max-w-md" :class="{ 'mt-24': isDemoMode }">
+    <div class="w-full max-w-md">
       <div class="bg-white rounded-2xl shadow-card p-8">
         <div class="text-center mb-8">
           <img :src="whiteLabel.brand.logo" :alt="whiteLabel.brand.name" class="w-20 h-20 mx-auto mb-4" />
@@ -48,6 +35,10 @@
             />
           </div>
           
+          <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm text-red-600">{{ error }}</p>
+          </div>
+          
           <button
             type="submit"
             :disabled="loading"
@@ -67,46 +58,40 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import whiteLabel from '@/config/whiteLabel'
+import axios from 'axios'
 
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('professional@example.com')
-const password = ref('password')
+const email = ref('')
+const password = ref('')
 const loading = ref(false)
-
-// Check if running in demo/mock mode
-const isDemoMode = import.meta.env.VITE_USE_MOCK === 'true'
+const error = ref('')
 
 async function handleLogin() {
   loading.value = true
+  error.value = ''
   
-  setTimeout(() => {
-    const mockToken = generateMockToken()
-    authStore.setToken(mockToken)
+  try {
+    const response = await axios.post(`${import.meta.env.VITE_ATIPICALI_URL}/auth/login`, {
+      email: email.value,
+      password: password.value
+    })
+    
+    const token = response.data.token || response.data.accessToken
+    authStore.setToken(token)
     
     if (authStore.needsOnboarding) {
       router.push('/onboarding')
     } else {
       router.push('/dashboard')
     }
-    
+  } catch (err) {
+    console.error('Login error:', err)
+    error.value = err.response?.data?.message || t('auth.loginError')
+  } finally {
     loading.value = false
-  }, 1000)
-}
-
-function generateMockToken() {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-  const payload = btoa(JSON.stringify({
-    userId: 'prof-123',
-    email: email.value,
-    role: 'PROFESSIONAL',
-    externalId: 'atipicali-prof-456',
-    needsOnboarding: false,
-    iat: Date.now(),
-    exp: Date.now() + 86400000
-  }))
-  return `${header}.${payload}.mock-signature`
+  }
 }
 </script>
